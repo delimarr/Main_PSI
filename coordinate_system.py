@@ -1,7 +1,7 @@
 import cv2
 import os
 import numpy as np
-from globals import camera_index
+from globals import camera_index, callibration_lengt
 
 def get_coordinateSystem():
     
@@ -9,22 +9,26 @@ def get_coordinateSystem():
 
     # Function to capture an image from the camera
     def capture_image():
-        cap = cv2.VideoCapture(camera_index)  # Open the default camera
-        if not cap.isOpened():
-            raise Exception("Could not open video device")
+        image_path = f'test-img/test_image10/photo_1.jpg'
+        frame = cv2.imread(image_path, cv2.IMREAD_COLOR)
 
-        ret, frame = cap.read()
-        cap.release()
 
-        if not ret:
-            raise Exception("Failed to capture image")
+        #cap = cv2.VideoCapture(camera_index)  # Open the default camera
+        #if not cap.isOpened():
+        #    raise Exception("Could not open video device")
+        #
+        #ret, frame = cap.read()
+        #cap.release()
+        #
+        #if not ret:
+        #    raise Exception("Failed to capture image")
 
         return frame
 
     # Function to calculate the transformation matrix
     def calculate_transformation_matrix(p1, p2, p3):
         pts_src = np.array([p1, p2, p3], dtype=np.float32)
-        pts_dst = np.array([[0, 0], [0, 205], [205, 0]], dtype=np.float32)
+        pts_dst = np.array([[0, 0], [0, callibration_lengt], [callibration_lengt, 0]], dtype=np.float32)
 
         matrix = cv2.getAffineTransform(pts_src, pts_dst)
         return matrix
@@ -75,7 +79,7 @@ def get_coordinateSystem():
         cv2.imshow("Select 4 Points", display_image)
         cv2.setMouseCallback("Select 4 Points", select_points)
 
-        point_names = ["P1 (0,0)", "P2 (0,228)", "P3 (228,0)", "P4 (228,228"]
+        point_names = [f"P1 (0,0)", f"P2 (0,{callibration_lengt})", f"P3 ({callibration_lengt},0)", f"P4 ({callibration_lengt},{callibration_lengt})"]
 
         while len(points) < 4:
             if len(points) < 4:

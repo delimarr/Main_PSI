@@ -12,6 +12,7 @@ import vision
 import coordinate_system
 import camera
 from fanuc_py_xyw_chunk_debug import FanucError, Robot
+from globals import callibration_lengt
 
 
 # Import the global variable from the globals module
@@ -103,7 +104,7 @@ def file_browser():
         )
         try:
             print('works')
-            #response = robot.connect()
+            response = robot.connect()
             update_scrollable_frame(response["msg"], "green" if response["success"] else "red")
         except:
             update_scrollable_frame('Roboter Verbindung fehlgeschlagen!', color="red")
@@ -138,7 +139,6 @@ def vision_data():
     num_try = 0
     indices = [index for index, value in enumerate(chip_quality_array) if value == '1']
 
-
     
         
     #[
@@ -166,6 +166,7 @@ def vision_data():
         update_scrollable_frame(f'Anzahl Chips nicht correct: Aktuelle Zahl {len(vision_data)}', color="red")
     else:
         update_scrollable_frame('Es wurden alle 36 Chips gefunden!', color="green")
+        print(f'visiondata:{vision_data}')        
 
     #print(f'vision data is: {vision_data}')
     #print(f'number of center: {len(vision_data)}')
@@ -196,7 +197,7 @@ def vision_data():
     print('Here')     
 
     try:
-        #robot.connect()
+        robot.connect()
         robot.send_vision_data(vision_data)
         robot.disconnect()
     except:
@@ -209,7 +210,7 @@ def vision_data():
 def coordinate_system_func():
 
     matrix, transformed_p4=coordinate_system.get_coordinateSystem()
-    if transformed_p4[0]> 10.3 or transformed_p4[0] <9.7 and transformed_p4[1]> 10.3 or transformed_p4[1] <9.7:
+    if transformed_p4[0]> callibration_lengt+0.3 or transformed_p4[0] <callibration_lengt - 0.3 and transformed_p4[1]> callibration_lengt+0.3 or transformed_p4[1] <callibration_lengt-0.3:
         update_scrollable_frame('Kallibrierung nicht exact: Bitte erneut versuchen!', color="red")
     else: 
         update_scrollable_frame('Kallibrierung Koordinatensystem i.O.', color="green")

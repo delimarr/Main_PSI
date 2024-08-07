@@ -305,6 +305,7 @@ def get_vision_data(indices):
                         
                         squares.append((approx, (cx, cy), (x, y, w, h)))
                         centers_squares.append((cx,cy))
+        
             num_array = np.array(angle_array)
             angle = np.mean(num_array)
             angle= float(angle)
@@ -335,8 +336,9 @@ def get_vision_data(indices):
             detect_squares_img=image.copy()
             
             num_center= len(centers_squares)
-            detect_squares_img = cv2.rotate(detect_squares_img, cv2.ROTATE_90_CLOCKWISE)
-
+            #detect_squares_img = cv2.rotate(detect_squares_img, cv2.ROTATE_90_CLOCKWISE)
+            
+           
            
             return centers_squares, center, num_center, angle, detect_squares_img
 
@@ -364,8 +366,14 @@ def get_vision_data(indices):
         def center_transformation(centers_squares, center, angle):
             vision_data_center = []
 
-            for i, (center) in enumerate(centers_squares):
-                point= centers_squares[i]
+            def sort_tuples(arr):
+                return sorted(arr, key=lambda x: (x[0], x[0]))
+
+            # Sorting the arrays
+            sorted_center_squares = sort_tuples(centers_squares)
+
+            for i, (center) in enumerate(sorted_center_squares):
+                point= sorted_center_squares[i]
                 vision_data_center = apply_transformation(matrix, point, vision_data_center, angle)
 
             return vision_data_center
