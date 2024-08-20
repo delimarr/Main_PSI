@@ -104,7 +104,7 @@ def file_browser():
         )
         try:
             print('works')
-            response = robot.connect()
+            #response = robot.connect()
             update_scrollable_frame(response["msg"], "green" if response["success"] else "red")
         except:
             update_scrollable_frame('Roboter Verbindung fehlgeschlagen!', color="red")
@@ -197,7 +197,7 @@ def vision_data():
     print('Here')     
 
     try:
-        robot.connect()
+        #robot.connect()
         robot.send_vision_data(vision_data)
         robot.disconnect()
     except:

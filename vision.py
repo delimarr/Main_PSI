@@ -12,7 +12,6 @@ missed=[]
 jumped= 0
 
 
-
 def get_vision_data(indices):
         filename="Project/txt/config.txt"
         image_path = f'test-img/test_image10/photo_1.jpg'
@@ -143,7 +142,6 @@ def get_vision_data(indices):
                     y2 = int(y0 - 1000 * (a))
                     cv2.line(black_image, (x1, y1), (x2, y2), (255, 255, 255), line_thickness)
                     cv2.line(black_image, (x1, y1), (x2, y2), (255, 255, 255), line_thickness)
-
             black_image_white_lines=black_image.copy()
             return black_image_white_lines, lines
 
@@ -180,6 +178,7 @@ def get_vision_data(indices):
                 return leftmost_line
 
 
+            
 
             # Parameters for HoughLinesP
             threshold = 1        # Minimum number of intersections to detect a line
@@ -196,6 +195,7 @@ def get_vision_data(indices):
 
             # Find the leftmost line
             leftmost_line = find_leftmost_line(filtered_lines)
+            
 
             # Draw the leftmost line
             if leftmost_line is not None:
@@ -217,7 +217,7 @@ def get_vision_data(indices):
                     y1 = int(y0 + 1000 * (a))
                     x2 = int(x0 - 1000 * (-b))
                     y2 = int(y0 - 1000 * (a))
-                    cv2.line(black_image, (x1, y1), (x2, y2), (255, 255, 255), line_thickness+20)
+                    cv2.line(black_image, (x1, y1), (x2, y2), (255, 255, 255), line_thickness+10)
 
             return white_black_lines
 
@@ -227,7 +227,6 @@ def get_vision_data(indices):
             mask = np.zeros_like(gray)
             cv2.circle(mask, new_center, radius -var_radius , 255, -1)  # Draw a filled white circle on the mask
             circular_region = cv2.bitwise_and(white_black_lines, white_black_lines, mask=mask)
-
             return circular_region
 
         def change_background_to_white(circular_region):
@@ -339,6 +338,8 @@ def get_vision_data(indices):
             #detect_squares_img = cv2.rotate(detect_squares_img, cv2.ROTATE_90_CLOCKWISE)
             
            
+            cv2.imwrite("center square img.jpg", detect_squares_img)
+            #cv2.imshow("doc/lineimg", line_image)
            
             return centers_squares, center, num_center, angle, detect_squares_img
 
@@ -421,27 +422,34 @@ def get_vision_data(indices):
         circle_image, center, radius, image= find_circle(image_path)
         black_image = black_image(image)
         search_line_image, dilated_edges = line_image_preparation(circle_image ) 
-        search_line_image = find_lines(search_line_image)
-        white_black_lines = find_last_line(search_line_image, dilated_edges, black_image)
+        line_image = find_lines(search_line_image)
+        white_black_lines = find_last_line(line_image, dilated_edges, black_image)
         circular_region= circle_lines_SW(white_black_lines, search_line_image)
         square_image = change_background_to_white(circular_region)
         detect_squares_centers, center, num_center, angle, detect_squares_img = detect_squares(square_image, min_square_size, max_square_size, indices)
         matrix = read_config_file(filename)
         #filtered_points = filter_points_by_quality(center, chip_quality_array, center)
+        
 
+
+        
         
         if (num_center==36):
             vision_data = center_transformation(detect_squares_centers, center, angle)
+            cv2.imshow('bild', detect_squares_img)
+            cv2.waitKey(0)
+            cv2.destroyAllWindows()
             return vision_data, detect_squares_img
         else: 
             return "Error: The number of squares is not 36"
 
 
 #center_squares = get_vision_data()
+#get_vision_data(indices)
 
 #print(square_array)
  # Show the result
-#cv2.imshow("Detected Squares", detect_squares_centers)s
+#cv2.imshow("Detected Squares", detect_squares_centers)
 #cv2.waitKey(0)
 #cv2.destroyAllWindows()
 # Show the result
