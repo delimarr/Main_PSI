@@ -173,11 +173,20 @@ def vision_data():
     len_vision_data = len(vision_data)
     
 
-    #if len_vision_data == 36:
-    #    label = customtkinter.CTkLabel(master=frame, text=f"Wafer data: {str(vision_data)}")
-    #    label.pack(pady=12, padx=10)
-    # Convert the image data to a format compatible with ImageTk
-    # Convert to OpenCV image
+    # Get original dimensions
+    original_height, original_width = detectSquareImg.shape[:2]
+    print(f"Original Dimensions: {original_width}x{original_height}")
+
+    # Define new height (the width will be calculated to maintain aspect ratio)
+    new_height = 400  # Replace with your desired height
+
+    # Calculate the new width to maintain the aspect ratio
+    aspect_ratio = original_width / original_height
+    new_width = int(new_height * aspect_ratio)
+
+    # Resize the image with the new dimensions
+    detectSquareImg = cv2.resize(detectSquareImg, (new_width, new_height))
+    
     try:
         # Resize the image
         PIL_image = Image.fromarray(detectSquareImg, 'RGB')

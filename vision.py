@@ -436,28 +436,8 @@ def get_vision_data(indices):
         
         if (num_center==36):
             vision_data = center_transformation(detect_squares_centers, center, angle)
-            cv2.imshow('bild', detect_squares_img)
-            cv2.waitKey(0)
-            cv2.destroyAllWindows()
             return vision_data, detect_squares_img
         else: 
             return "Error: The number of squares is not 36"
 
-
-#center_squares = get_vision_data()
-#get_vision_data(indices)
-
-#print(square_array)
- # Show the result
-#cv2.imshow("Detected Squares", detect_squares_centers)
-#cv2.waitKey(0)
-#cv2.destroyAllWindows()
-# Show the result
-#cv2.imshow("search_line_image", white_black_lines)
-#cv2.imshow("Detected Squares", image)
-#cv2.imwrite('all_squares_plus_two.jpg', image)
-#cv2.waitKey(0)
-#cv2.destroyAllWindows()
-#    
-#cv2.imwrite('detect_squares_centers.jpg', detect_squares_centers)
 
