@@ -9,19 +9,19 @@ def get_coordinateSystem():
 
     # Function to capture an image from the camera
     def capture_image():
-        image_path = f'test-img/test_image10/photo_1.jpg'
-        frame = cv2.imread(image_path, cv2.IMREAD_COLOR)
+        #image_path = f'test-img/test_image10/photo_1.jpg'
+        #frame = cv2.imread(image_path, cv2.IMREAD_COLOR)
 
 
-        #cap = cv2.VideoCapture(camera_index)  # Open the default camera
-        #if not cap.isOpened():
-        #    raise Exception("Could not open video device")
-        #
-        #ret, frame = cap.read()
-        #cap.release()
-        #
-        #if not ret:
-        #    raise Exception("Failed to capture image")
+        cap = cv2.VideoCapture(camera_index)  # Open the default camera
+        if not cap.isOpened():
+            raise Exception("Could not open video device")
+        
+        ret, frame = cap.read()
+        cap.release()
+        
+        if not ret:
+            raise Exception("Failed to capture image")
 
         return frame
 

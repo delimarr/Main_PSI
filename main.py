@@ -104,7 +104,7 @@ def file_browser():
         )
         try:
             print('works')
-            #response = robot.connect()
+            response = robot.connect()
             update_scrollable_frame(response["msg"], "green" if response["success"] else "red")
         except:
             update_scrollable_frame('Roboter Verbindung fehlgeschlagen!', color="red")
@@ -159,7 +159,8 @@ def vision_data():
     if chip_quality_array == []:
         update_scrollable_frame('Keine Wafer map geladen: Importiere zuerst eine Wafer map!', color="red")
     else:
-        vision_data, detectSquareImg = vision.get_vision_data(indices)
+        vision_data, detectSquareImg, num_center = vision.get_vision_data(indices)
+        print(num_center)
 
         
     if len(vision_data) != 36:
@@ -206,7 +207,7 @@ def vision_data():
     print('Here')     
 
     try:
-        #robot.connect()
+        robot.connect()
         robot.send_vision_data(vision_data)
         robot.disconnect()
     except:

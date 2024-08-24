@@ -2,6 +2,7 @@
 chip_quality_array = []
 indices =[]
 
+global camera_index
 camera_index=0
 
-callibration_lengt = 205
+callibration_lengt = 229

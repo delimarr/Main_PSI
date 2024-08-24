@@ -1,31 +1,36 @@
 import cv2
 import numpy as np
 from math import sqrt
+import time
 
 # Import the global variable from the globals module
 from globals import chip_quality_array, indices, camera_index
 
-indices = indices
+camera_index=0
+vision_data = []
 
+
+
+indices = []
 passed=0
 missed=[]
 jumped= 0
 
 
-def get_vision_data(indices):
+def get_vision_data_func(indices):
         filename="Project/txt/config.txt"
-        image_path = f'test-img/test_image10/photo_1.jpg'
+        image_path = f'Studie/img/img4.jpg'
 
         line_thickness = 4
-        center_move_x = 6
-        center_move_y= 0
-        var_radius= 5
+        center_move_x = 7
+        center_move_y= 3
+        var_radius= 2
 
 
 
          # Parameters for square detection
-        min_square_size = 1200  # Minimum area of the square
-        max_square_size = 2000  # Maximum area of the square
+        min_square_size = 3000  # Minimum area of the square
+        max_square_size = 5000  # Maximum area of the square
 
 
         def capture_picture(camera_index):
@@ -51,16 +56,18 @@ def get_vision_data(indices):
 
         def find_circle(image):
             # Read the image
-            #image = frame
-            image = cv2.imread(image_path, cv2.IMREAD_COLOR)
+            image = frame
+            #image = cv2.imread(image_path, cv2.IMREAD_COLOR)
             gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+            
+
 
             # Apply a Gaussian blur to the image to reduce noise and improve circle detection
             blurred = cv2.GaussianBlur(gray, (9, 9), 2)
 
             # Use the Hough Circle Transform to detect circles
             circles = cv2.HoughCircles(blurred, cv2.HOUGH_GRADIENT, dp=1.2, minDist=100,
-                                       param1=50, param2=30, minRadius=50, maxRadius=300)
+                                       param1=50, param2=30, minRadius=50, maxRadius=400)
 
             if circles is not None:
                 circles = np.round(circles[0, :]).astype("int")
@@ -124,6 +131,7 @@ def get_vision_data(indices):
             line_search_image = cv2.dilate(blur, None, iterations=1) 
             threshold_value = 128  # Modify if you want a different threshold
             _, line_search_image = cv2.threshold(line_search_image, threshold_value, 255, cv2.THRESH_BINARY)
+
             return line_search_image, dilated_edges
 
         def find_lines(line_search_image):
@@ -219,6 +227,7 @@ def get_vision_data(indices):
                     y2 = int(y0 - 1000 * (a))
                     cv2.line(black_image, (x1, y1), (x2, y2), (255, 255, 255), line_thickness+10)
 
+
             return white_black_lines
 
         def circle_lines_SW(white_black_lines, black_image):
@@ -227,8 +236,9 @@ def get_vision_data(indices):
             mask = np.zeros_like(gray)
             cv2.circle(mask, new_center, radius -var_radius , 255, -1)  # Draw a filled white circle on the mask
             circular_region = cv2.bitwise_and(white_black_lines, white_black_lines, mask=mask)
-            return circular_region
 
+            return circular_region
+        
         def change_background_to_white(circular_region):
             # Convert the image to grayscale
             gray = cv2.cvtColor(circular_region, cv2.COLOR_BGR2GRAY)
@@ -252,6 +262,7 @@ def get_vision_data(indices):
                 square_image = np.where(mask == (255, 255, 255), circular_region, white_background)
             else:
                 print("No contours found in the image.")
+            
 
             return square_image
 
@@ -298,7 +309,7 @@ def get_vision_data(indices):
                         
                         # Calculate the angle
                         rect = cv2.minAreaRect(contour)
-                        angle_point = rect[2]-90
+                        angle_point = 0 #rect[2]-90
                         angle_array.append(angle_point)          
                         
                         
@@ -338,9 +349,9 @@ def get_vision_data(indices):
             #detect_squares_img = cv2.rotate(detect_squares_img, cv2.ROTATE_90_CLOCKWISE)
             
            
-            cv2.imwrite("center square img.jpg", detect_squares_img)
-            #cv2.imshow("doc/lineimg", line_image)
            
+           
+
             return centers_squares, center, num_center, angle, detect_squares_img
 
         def read_config_file(filename):
@@ -418,8 +429,8 @@ def get_vision_data(indices):
 
 
         # Analyze the provided image
-        #frame = capture_picture()
-        circle_image, center, radius, image= find_circle(image_path)
+        frame = capture_picture(camera_index)
+        circle_image, center, radius, image= find_circle(frame)
         black_image = black_image(image)
         search_line_image, dilated_edges = line_image_preparation(circle_image ) 
         line_image = find_lines(search_line_image)
@@ -433,11 +444,47 @@ def get_vision_data(indices):
 
 
         
-        
         if (num_center==36):
             vision_data = center_transformation(detect_squares_centers, center, angle)
-            return vision_data, detect_squares_img
+            return vision_data, detect_squares_img, num_center
         else: 
-            return "Error: The number of squares is not 36"
+            print(f'The number of detected Chips is {num_center}')
+            vision_data = center_transformation(detect_squares_centers, center, angle)
+            return vision_data, detect_squares_img, num_center
 
+indices=[]
 
+def get_vision_data(indices):
+    indices=indices
+    num_center =0
+    i=0
+    while num_center!=36 and i<20:
+        count_good=0
+        count_bad=0
+        i+=1
+        vision_data, detected_img, num_center = get_vision_data_func(indices)
+        time.sleep(1)  # Delay for 1 seconds
+
+        
+        #print(vision_data)
+        #print(f'numcenter: {num_center}')
+        #cv2.imshow('bild', detected_img)
+        #cv2.waitKey(0)
+        #cv2.destroyAllWindows()
+        #print(f'pic num: {i}-({num_center})')
+        if num_center == 36:
+            count_good+=1
+        else:
+            count_bad+=1
+    if i == 20:
+        print('not right number found!')
+    print(f'gut:{count_good}')
+    print(f'schlecht:{count_bad}')       
+
+    if count_bad ==0:
+        print('Perfect!')
+        
+    return vision_data, detected_img, num_center
+
+#get_vision_data(indices)
+        
