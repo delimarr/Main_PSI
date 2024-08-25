@@ -12,7 +12,7 @@ import vision
 import coordinate_system
 import camera
 from fanuc_py_xyw_chunk_debug import FanucError, Robot
-from globals import callibration_lengt
+from globals import callibration_lengt, callibragtion_tolerance
 
 
 # Import the global variable from the globals module
@@ -127,76 +127,57 @@ def file_browser():
         output_file_csv = f"{waver_typ}_Wafer_{wafer}_Ablage_{current_datetime.strftime('%Y-%m-%d_%H-%M-%S')}.csv"
         waver_info_df.to_csv(output_file_csv, index=False)
         print(f"Files saved as {output_file_xlsx} and {output_file_csv}")
-
+        print(chip_quality_array)
         return chip_quality_array
 
 
 def vision_data():
     global chip_quality_array
     global indices
-    
-    vision_data=[]
-    num_try = 0
+    global image_label  # Declare this as global to reuse it for updating the image
+
+    vision_data = []
     indices = [index for index, value in enumerate(chip_quality_array) if value == '1']
 
-    
-        
-    #[
-        #(1.0, 2.0, -3.0), (1.1, 20.1, 3.1), (1.2, 29.2, 0.2), (10.3, 2.3, 3.3),
-        #(10.4, 20.4, -0.4), (10.5, 29.5, 3.5), (21.6, 2.6, 0.6), (21.7, 20.7, -0.7),
-        #(21.8, 29.8, 0.8), (31.9, 2.9, 0.9), (32.0, 13.0, 1.0), (32.1, 23.1, 1.1),
-        #(32.2, 33.2, 1.2), (42.3, 3.3, 1.3), (42.4, 23.4, 1.4), (32.5, 43.5, 1.5),
-        #(2.6, 3.6, 1.6), (2.7, 3.7, 1.7), (2.8, 3.8, 1.8), (2.9, 3.9, 1.9),
-        #(3.0, 4.0, 3.0), (3.1, 4.1, 2.1), (3.2, 4.2, 2.2), (3.3, 4.3, 2.3),
-        #(3.4, 4.4, 2.4), (3.5, 4.5, 2.5), (3.6, 4.6, 2.6), (3.7, 4.7, 2.7),
-        #(3.8, 4.8, 3.8), (3.9, 4.9, 3.9), (4.0, 5.0, 3.0), (4.1, 5.1, 3.1),
-        #(4.2, 5.2, 3.2), (4.3, 5.3, 3.3), (4.4, 5.4, 3.4), (4.5, 5.5, 3.5)
-    #]  # 36 tuples of (x, y, w)
-    
-
-    
-    # Transform the vision_data points
+    # Check if Wafer map is loaded
     if chip_quality_array == []:
         update_scrollable_frame('Keine Wafer map geladen: Importiere zuerst eine Wafer map!', color="red")
+        return
     else:
         vision_data, detectSquareImg, num_center = vision.get_vision_data(indices)
-        print(num_center)
 
-        
+    # Check the number of chips found
     if len(vision_data) != 36:
-        update_scrollable_frame(f'Anzahl Chips nicht correct: Aktuelle Zahl {len(vision_data)}', color="red")
+        update_scrollable_frame(f'Anzahl Chips nicht korrekt: Aktuelle Zahl {len(vision_data)}', color="red")
     else:
         update_scrollable_frame('Es wurden alle 36 Chips gefunden!', color="green")
-        print(f'visiondata:{vision_data}')        
+        print(f'visiondata:{vision_data}')
 
-    #print(f'vision data is: {vision_data}')
-    #print(f'number of center: {len(vision_data)}')
-    len_vision_data = len(vision_data)
-    
-
-    # Get original dimensions
+    # Resize the image
     original_height, original_width = detectSquareImg.shape[:2]
-    print(f"Original Dimensions: {original_width}x{original_height}")
-
-    # Define new height (the width will be calculated to maintain aspect ratio)
     new_height = 400  # Replace with your desired height
-
-    # Calculate the new width to maintain the aspect ratio
     aspect_ratio = original_width / original_height
     new_width = int(new_height * aspect_ratio)
 
-    # Resize the image with the new dimensions
     detectSquareImg = cv2.resize(detectSquareImg, (new_width, new_height))
-    
-    try:
-        # Resize the image
-        PIL_image = Image.fromarray(detectSquareImg, 'RGB')
-        ctk_image = ImageTk.PhotoImage(PIL_image)   
-        image_label = customtkinter.CTkLabel(bottom_frame, image=ctk_image, text="")
-        image_label.pack(padx=20, pady=20)
-    except:
-        print('no image data')
 
+    try:
+        PIL_image = Image.fromarray(detectSquareImg, 'RGB')
+        ctk_image = ImageTk.PhotoImage(PIL_image)
+
+        # Check if image_label exists, if yes, update it, otherwise create it
+        if 'image_label' in globals():
+            image_label.configure(image=ctk_image)
+            image_label.image = ctk_image  # Keep a reference to avoid garbage collection
+        else:
+            image_label = customtkinter.CTkLabel(bottom_frame, image=ctk_image, text="")
+            image_label.pack(padx=20, pady=20)
+            image_label.image = ctk_image  # Keep a reference to avoid garbage collection
+
+    except Exception as e:
+        print(f'Error displaying image: {e}')
+
+    # Robot data transmission (unchanged)
     robot = Robot(
         robot_model="Fanuc",
         host="192.168.0.100",
@@ -204,23 +185,23 @@ def vision_data():
         ee_DO_type="RDO",
         ee_DO_num=7,
     )
-    print('Here')     
 
     try:
         robot.connect()
         robot.send_vision_data(vision_data)
+        update_scrollable_frame('Die Vision-Daten wurden erfolgreich gesendet!', color="green")
         robot.disconnect()
     except:
         update_scrollable_frame('Roboter Verbindung fehlgeschlagen', color="red")
-        
-   
+
     return vision_data, detectSquareImg
+
 
 
 def coordinate_system_func():
 
     matrix, transformed_p4=coordinate_system.get_coordinateSystem()
-    if transformed_p4[0]> callibration_lengt+0.3 or transformed_p4[0] <callibration_lengt - 0.3 and transformed_p4[1]> callibration_lengt+0.3 or transformed_p4[1] <callibration_lengt-0.3:
+    if transformed_p4[0]> callibration_lengt+callibragtion_tolerance or transformed_p4[0] <callibration_lengt - callibragtion_tolerance and transformed_p4[1]> callibration_lengt+callibragtion_tolerance or transformed_p4[1] <callibration_lengt-callibragtion_tolerance:
         update_scrollable_frame('Kallibrierung nicht exact: Bitte erneut versuchen!', color="red")
     else: 
         update_scrollable_frame('Kallibrierung Koordinatensystem i.O.', color="green")

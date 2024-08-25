@@ -5,13 +5,13 @@ import time
 
 # Import the global variable from the globals module
 from globals import chip_quality_array, indices, camera_index
-
+indices =['1', '1', '0', '1', '1', '0', '0', '1', '1', '1', '1', '0', '1', '0', '1', '1', '1', '1', '0', '1', '0', '0', '1', '1', '0', '1', '0', '1', '0', '0', '1', '1', '1', '1', '1', '1']
 camera_index=0
 vision_data = []
 
 
 
-indices = []
+#indices = []
 passed=0
 missed=[]
 jumped= 0
@@ -19,7 +19,7 @@ jumped= 0
 
 def get_vision_data_func(indices):
         filename="Project/txt/config.txt"
-        image_path = f'Studie/img/img4.jpg'
+        image_path = f'Studie/img/img30.jpg'
 
         line_thickness = 4
         center_move_x = 7
@@ -56,8 +56,8 @@ def get_vision_data_func(indices):
 
         def find_circle(image):
             # Read the image
-            image = frame
-            #image = cv2.imread(image_path, cv2.IMREAD_COLOR)
+            #image = frame
+            image = cv2.imread(image_path, cv2.IMREAD_COLOR)
             gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
             
 
@@ -326,23 +326,25 @@ def get_vision_data_func(indices):
             for idx, (square, center, bbox) in enumerate(squares, start=1):
                  x, y, w, h = bbox
                  cv2.drawContours(image, [square], -1, (0, 255, 0), 2)
-                 cv2.circle(image, center, 5, (0, 0, 255), -1)
-                 
-                 #print(f'indicccc{indices}')
+                 cv2.circle(image, center, 5, (0, 0, 0), -1)
+
+                 positions = [index for index, value in enumerate(indices) if value == '1']
+                 increased_positions = [x + 1 for x in positions]
+
                  # Check if idx is in indices and set the color
-                 if idx in indices:
+                 if idx in increased_positions:
                      color = (255, 0, 0)  # Red color for indices in the list
                  else:
-                     #print(idx)
-                     color = (255, 255, 0)  # Yellow color for indices not in the list
+                     print(idx)
+                     color = (0, 0, 255)  # Yellow color for indices not in the list
 
                  cv2.putText(image, str(idx), (x, y + 30), cv2.FONT_HERSHEY_SIMPLEX, 0.8, color, 2)
 
                 # Draw the number
-                #if idx == 2:
-                #    cv2.putText(image, str(idx), (x, y + 30), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 0, 0), 2)
-                #else:
-                #    cv2.putText(image, str(idx), (x, y + 30), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 0), 2)
+                # if idx == 2:
+                #     cv2.putText(image, str(idx), (x, y + 30), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 0, 0), 2)
+                # else:
+                #     cv2.putText(image, str(idx), (x, y + 30), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 0), 2)
             detect_squares_img=image.copy()
             
             num_center= len(centers_squares)
@@ -414,6 +416,7 @@ def get_vision_data_func(indices):
 
                 # Filter points where quality is 1
                 filtered_points = coords[qual == 1]
+                print(filtered_points)
 
                 for idx, (square, filtered_points, bbox) in enumerate(center, start=1):
                     x, y, w, h = bbox
@@ -429,8 +432,8 @@ def get_vision_data_func(indices):
 
 
         # Analyze the provided image
-        frame = capture_picture(camera_index)
-        circle_image, center, radius, image= find_circle(frame)
+        #frame = capture_picture(camera_index)
+        circle_image, center, radius, image= find_circle(image_path)
         black_image = black_image(image)
         search_line_image, dilated_edges = line_image_preparation(circle_image ) 
         line_image = find_lines(search_line_image)
@@ -466,12 +469,12 @@ def get_vision_data(indices):
         time.sleep(1)  # Delay for 1 seconds
 
         
-        #print(vision_data)
-        #print(f'numcenter: {num_center}')
-        #cv2.imshow('bild', detected_img)
-        #cv2.waitKey(0)
-        #cv2.destroyAllWindows()
-        #print(f'pic num: {i}-({num_center})')
+        print(vision_data)
+        print(f'numcenter: {num_center}')
+        cv2.imshow('bild', detected_img)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+        print(f'pic num: {i}-({num_center})')
         if num_center == 36:
             count_good+=1
         else:
