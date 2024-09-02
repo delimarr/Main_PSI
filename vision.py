@@ -4,11 +4,10 @@ from math import sqrt
 import time
 
 # Import the global variable from the globals module
+global indices
 from globals import chip_quality_array, indices, camera_index
-indices =['1', '1', '0', '1', '1', '0', '0', '1', '1', '1', '1', '0', '1', '0', '1', '1', '1', '1', '0', '1', '0', '0', '1', '1', '0', '1', '0', '1', '0', '0', '1', '1', '1', '1', '1', '1']
 camera_index=0
 vision_data = []
-
 
 
 #indices = []
@@ -29,8 +28,8 @@ def get_vision_data_func(indices):
 
 
          # Parameters for square detection
-        min_square_size = 3000  # Minimum area of the square
-        max_square_size = 5000  # Maximum area of the square
+        min_square_size = 2000  # Minimum area of the square
+        max_square_size = 4000  # Maximum area of the square
 
 
         def capture_picture(camera_index):
@@ -55,9 +54,11 @@ def get_vision_data_func(indices):
 
 
         def find_circle(image):
+            
+            
             # Read the image
-            #image = frame
-            image = cv2.imread(image_path, cv2.IMREAD_COLOR)
+            image = frame
+            #image = cv2.imread(image_path, cv2.IMREAD_COLOR)
             gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
             
 
@@ -67,7 +68,7 @@ def get_vision_data_func(indices):
 
             # Use the Hough Circle Transform to detect circles
             circles = cv2.HoughCircles(blurred, cv2.HOUGH_GRADIENT, dp=1.2, minDist=100,
-                                       param1=50, param2=30, minRadius=50, maxRadius=400)
+                                       param1=50, param2=30, minRadius=150, maxRadius=350)
 
             if circles is not None:
                 circles = np.round(circles[0, :]).astype("int")
@@ -98,9 +99,10 @@ def get_vision_data_func(indices):
                 circle_image = cv2.bitwise_and(circular_region_mono_colored, circular_region_mono_colored, mask=mask) + \
                                cv2.bitwise_and(white_background, white_background, mask=inverted_mask)
 
-
             else: 
                 print("Error: No circles detected.")
+                
+            
             return circle_image, center, radius, image
 
         def black_image(image):
@@ -322,6 +324,7 @@ def get_vision_data_func(indices):
             # Sort squares by their top-left corner positions (reading order: top to bottom, left to right)
             squares.sort(key=lambda s: (s[2][0], -s[2][1]))
 
+
             # Draw the squares, their centers, and numbers
             for idx, (square, center, bbox) in enumerate(squares, start=1):
                  x, y, w, h = bbox
@@ -329,7 +332,9 @@ def get_vision_data_func(indices):
                  cv2.circle(image, center, 5, (0, 0, 0), -1)
 
                  positions = [index for index, value in enumerate(indices) if value == '1']
-                 increased_positions = [x + 1 for x in positions]
+                 increased_positions = [x + 1 for x in indices]
+                 print(f'indicbbbies{increased_positions}')
+
 
                  # Check if idx is in indices and set the color
                  if idx in increased_positions:
@@ -350,9 +355,9 @@ def get_vision_data_func(indices):
             num_center= len(centers_squares)
             #detect_squares_img = cv2.rotate(detect_squares_img, cv2.ROTATE_90_CLOCKWISE)
             
-           
-           
-           
+
+            #cv2.imshow("Detected Squares", detect_squares_img)
+
 
             return centers_squares, center, num_center, angle, detect_squares_img
 
@@ -432,8 +437,8 @@ def get_vision_data_func(indices):
 
 
         # Analyze the provided image
-        #frame = capture_picture(camera_index)
-        circle_image, center, radius, image= find_circle(image_path)
+        frame = capture_picture(camera_index)
+        circle_image, center, radius, image= find_circle(frame)
         black_image = black_image(image)
         search_line_image, dilated_edges = line_image_preparation(circle_image ) 
         line_image = find_lines(search_line_image)
@@ -458,22 +463,19 @@ def get_vision_data_func(indices):
 indices=[]
 
 def get_vision_data(indices):
+
     indices=indices
+    print
     num_center =0
     i=0
+    count_good=0
+    count_bad=0
     while num_center!=36 and i<20:
-        count_good=0
-        count_bad=0
         i+=1
         vision_data, detected_img, num_center = get_vision_data_func(indices)
         time.sleep(1)  # Delay for 1 seconds
 
-        
-        print(vision_data)
-        print(f'numcenter: {num_center}')
-        cv2.imshow('bild', detected_img)
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
+
         print(f'pic num: {i}-({num_center})')
         if num_center == 36:
             count_good+=1
@@ -482,10 +484,16 @@ def get_vision_data(indices):
     if i == 20:
         print('not right number found!')
     print(f'gut:{count_good}')
-    print(f'schlecht:{count_bad}')       
+    print(f'schlecht:{count_bad}')
+    
+    #cv2.imshow('Bild', detected_img)
+    #cv2.waitKey(0)
+    #cv2.destroyAllWindows()       
 
     if count_bad ==0:
         print('Perfect!')
+        
+    
         
     return vision_data, detected_img, num_center
 

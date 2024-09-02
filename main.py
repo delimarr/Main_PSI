@@ -36,6 +36,7 @@ def update_scrollable_frame(message: str, color: str = "black"):
     label.pack(pady=5, padx=10)
 
 def file_browser():
+    global chip_quality_array
     print("Opening next UI")
     file = filedialog.askopenfile()
     if file:
@@ -132,12 +133,13 @@ def file_browser():
 
 
 def vision_data():
-    global chip_quality_array
+
     global indices
     global image_label  # Declare this as global to reuse it for updating the image
 
     vision_data = []
     indices = [index for index, value in enumerate(chip_quality_array) if value == '1']
+    #print(f'indicies{indices}')
 
     # Check if Wafer map is loaded
     if chip_quality_array == []:
