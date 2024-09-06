@@ -187,6 +187,12 @@ def vision_data():
         ee_DO_type="RDO",
         ee_DO_num=7,
     )
+    
+    def increase_first_number(visiondata):
+                # Increase the first number in each tuple by 2
+                updated_data = [(x + 2, y-1, z) for (x, y, z) in visiondata]
+                return updated_data
+    vision_data = increase_first_number(vision_data)
 
     try:
         robot.connect()
@@ -263,4 +269,4 @@ bottom_label = customtkinter.CTkLabel(master=bottom_frame, text="Wafer Bild", fo
 bottom_label.pack(pady=12, padx=5)
 
 
-root.mainloop()
+root.mainloop()  

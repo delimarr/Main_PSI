@@ -227,7 +227,7 @@ def get_vision_data_func(indices):
                     y1 = int(y0 + 1000 * (a))
                     x2 = int(x0 - 1000 * (-b))
                     y2 = int(y0 - 1000 * (a))
-                    cv2.line(black_image, (x1, y1), (x2, y2), (255, 255, 255), line_thickness+10)
+                    cv2.line(black_image, (x1, y1), (x2, y2), (255, 255, 255), line_thickness+20)
 
 
             return white_black_lines
@@ -328,7 +328,7 @@ def get_vision_data_func(indices):
             # Draw the squares, their centers, and numbers
             for idx, (square, center, bbox) in enumerate(squares, start=1):
                  x, y, w, h = bbox
-                 cv2.drawContours(image, [square], -1, (0, 255, 0), 2)
+                 cv2.drawContours(image, [square], -1, (0, 0, 255), 2)
                  cv2.circle(image, center, 5, (0, 0, 0), -1)
 
                  positions = [index for index, value in enumerate(indices) if value == '1']
@@ -338,10 +338,10 @@ def get_vision_data_func(indices):
 
                  # Check if idx is in indices and set the color
                  if idx in increased_positions:
-                     color = (255, 0, 0)  # Red color for indices in the list
+                     color = (0, 255, 0)  # Red color for indices in the list
                  else:
                      print(idx)
-                     color = (0, 0, 255)  # Yellow color for indices not in the list
+                     color = (255, 0, 0)  # Yellow color for indices not in the list
 
                  cv2.putText(image, str(idx), (x, y + 30), cv2.FONT_HERSHEY_SIMPLEX, 0.8, color, 2)
 
@@ -458,6 +458,9 @@ def get_vision_data_func(indices):
         else: 
             print(f'The number of detected Chips is {num_center}')
             vision_data = center_transformation(detect_squares_centers, center, angle)
+            
+            
+            
             return vision_data, detect_squares_img, num_center
 
 indices=[]
