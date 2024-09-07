@@ -1,4 +1,5 @@
-#Simon Eich
+#Autor: Simon Eich
+#File to open a window with a live vidoe of the camera.
 import cv2
 import tkinter as tk
 from tkinter import ttk

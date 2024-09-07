@@ -1,3 +1,6 @@
+#Autor: Simon Eich
+#File with the logic of the actual visin System. 
+
 import cv2
 import numpy as np
 from math import sqrt
@@ -19,16 +22,15 @@ jumped= 0
 def get_vision_data_func(indices):
         
         filename="txt/config.txt"
-        image_path = f'Studie/img/img30.jpg'
+        #image_path = f'Studie/img/img30.jpg' #used for tests when the camera is not available 
 
+        #Patameters for the line, mask center movement and Changing of the Radius
         line_thickness = 4
         center_move_x = 7
         center_move_y= 3
         var_radius= 2
 
-
-
-         # Parameters for square detection
+        # Parameters for square detection
         min_square_size = 2000  # Minimum area of the square
         max_square_size = 4000  # Maximum area of the square
 
@@ -107,6 +109,7 @@ def get_vision_data_func(indices):
             return circle_image, center, radius, image
 
         def black_image(image):
+            # Create a black background image
             black_image = image.copy()
             height, width, channels = black_image.shape
             black_image = np.zeros((height, width, channels), dtype=np.uint8)
@@ -114,10 +117,10 @@ def get_vision_data_func(indices):
             return black_image
 
         def line_image_preparation(circle_image):
+            # Prepare the image that a successful line detection is possible.
             image_line = circle_image.copy()
             #image_line = np.zeros_like(circle_image)
             gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-            mask = np.zeros_like(gray)
 
          # Use the Canny edge detector
             edges = cv2.Canny(image_line, 50, 150, apertureSize=3)
@@ -154,6 +157,7 @@ def get_vision_data_func(indices):
                     cv2.line(black_image, (x1, y1), (x2, y2), (255, 255, 255), line_thickness)
                     cv2.line(black_image, (x1, y1), (x2, y2), (255, 255, 255), line_thickness)
             black_image_white_lines=black_image.copy()
+            
             return black_image_white_lines, lines
 
         def find_last_line(white_black_lines, dilated_edges, black_image):
@@ -233,7 +237,7 @@ def get_vision_data_func(indices):
 
             return white_black_lines
 
-        def circle_lines_SW(white_black_lines, black_image):
+        def circle_lines_SW(white_black_lines):
             new_center = (center[0]-center_move_x, center[1]-center_move_y)
             gray = cv2.cvtColor(white_black_lines, cv2.COLOR_BGR2GRAY)
             mask = np.zeros_like(gray)
@@ -279,11 +283,6 @@ def get_vision_data_func(indices):
 
         def detect_squares(square_image, min_square_size, max_square_size, indices):
         
-
-            #indices = [index for index, value in enumerate(chip_quality_array) if value == '1']
-            #print(f'chip_qualtiy{chip_quality_array}')
-            #print(f'indic{indices}')
-            # Convert to grayscale
             gray = cv2.cvtColor(square_image, cv2.COLOR_BGR2GRAY)
 
             # Apply Gaussian blur
@@ -364,6 +363,7 @@ def get_vision_data_func(indices):
 
 
         def read_config_file(filename):
+        # getting the Matrix from the config file to do the coordinate transformation.
             points = []
             matrix = []
             transformed_p4 = None
@@ -455,14 +455,12 @@ def get_vision_data_func(indices):
         search_line_image, dilated_edges = line_image_preparation(circle_image ) 
         line_image = find_lines(search_line_image)
         white_black_lines = find_last_line(line_image, dilated_edges, black_image)
-        circular_region= circle_lines_SW(white_black_lines, search_line_image)
+        circular_region= circle_lines_SW(white_black_lines)
         square_image = change_background_to_white(circular_region)
         detect_squares_centers, center, num_center, angle, detect_squares_img = detect_squares(square_image, min_square_size, max_square_size, indices)
         matrix = read_config_file(filename)
-        #filtered_points = filter_points_by_quality(center, chip_quality_array, center)
+        #filtered_points = filter_points_by_quality(center, chip_quality_array, center) #The points are filtered later in the Karol Programm of the Robot. So it's not nessecary to do it here.
         
-
-
         
         if (num_center==36):
             vision_data = center_transformation(detect_squares_centers, center, angle)
@@ -483,34 +481,33 @@ def get_vision_data(indices):
     print
     num_center =0
     i=0
-    count_good=0
-    count_bad=0
+    #count_good=0
+    #count_bad=0
+    
+    #The vision system doesn't have a succsrate dependig on the light about above 85%, 
+    #so we need to run the vision system multiple times to be sure to get the result in fast time.
     while num_center!=36 and i<20:
         i+=1
         vision_data, detected_img, num_center = get_vision_data_func(indices)
         time.sleep(1)  # Delay for 1 seconds
 
 
-        print(f'pic num: {i}-({num_center})')
-        if num_center == 36:
-            count_good+=1
-        else:
-            count_bad+=1
-    if i == 20:
-        print('not right number found!')
-    print(f'gut:{count_good}')
-    print(f'schlecht:{count_bad}')
-    
-    #cv2.imshow('Bild', detected_img)
-    #cv2.waitKey(0)
-    #cv2.destroyAllWindows()       
-
-    if count_bad ==0:
-        print('Perfect!')
+    # Code can be used to get feedback how the detection is working.
+    #    print(f'pic num: {i}-({num_center})')
+    #    if num_center == 36:
+    #        count_good+=1
+    #    else:
+    #        count_bad+=1
+    #if i == 20:
+    #    print('not right number found!')
+    #print(f'gut:{count_good}')
+    #print(f'schlecht:{count_bad}')   
+    #
+    #if count_bad ==0:
+    #    print('Perfect!')
         
     
         
     return vision_data, detected_img, num_center
 
-#get_vision_data(indices)
         

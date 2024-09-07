@@ -1,3 +1,6 @@
+#Autor: Simon Eich
+#File to calculate the koordinate Transformation.
+
 import cv2
 import os
 import numpy as np

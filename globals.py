@@ -1,3 +1,6 @@
+#Autor: Simon Eich
+#File to save values of varialbles used in diffrent files.
+
 # globals.py
 chip_quality_array = []
 indices =[]
