@@ -17,7 +17,8 @@ jumped= 0
 
 
 def get_vision_data_func(indices):
-        filename="Project/txt/config.txt"
+        
+        filename="txt/config.txt"
         image_path = f'Studie/img/img30.jpg'
 
         line_thickness = 4
@@ -361,25 +362,36 @@ def get_vision_data_func(indices):
 
             return centers_squares, center, num_center, angle, detect_squares_img
 
+
         def read_config_file(filename):
             points = []
             matrix = []
+            transformed_p4 = None
+
             with open(filename, 'r') as file:
                 lines = file.readlines()
+
                 for line in lines:
+                    # Extract points (P1, P2, P3, P4)
                     if line.startswith('P'):
                         parts = line.split(':')
                         point = tuple(map(int, parts[1].strip().split(',')))
                         points.append(point)
+
+                    # Extract the transformation matrix rows
+                    elif line.strip() and not line.startswith('Transformation Matrix') and not line.startswith('Transformed P4') and not line.startswith('Time of configuration'):
+                        row = list(map(float, line.strip().split()))
+                        matrix.append(row)
+
+                    # Extract transformed P4
                     elif line.startswith('Transformed P4'):
                         parts = line.split(':')
                         transformed_p4 = tuple(map(float, parts[1].strip().split(',')))
-                    elif line.strip() and not line.startswith('Transformation Matrix'):
-                        row = list(map(float, line.strip().split()))
-                        matrix.append(row)
-            matrix = np.array(matrix, dtype=np.float32)
-            return matrix
 
+            # Convert matrix to a NumPy array
+            matrix = np.array(matrix, dtype=np.float32)
+
+            return matrix
 
 
         def center_transformation(centers_squares, center, angle):

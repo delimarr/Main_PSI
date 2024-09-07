@@ -2,6 +2,7 @@ import cv2
 import os
 import numpy as np
 from globals import camera_index, callibration_lengt
+from datetime import datetime  # Import datetime module for current timestamp
 
 def get_coordinateSystem():
     
@@ -9,9 +10,6 @@ def get_coordinateSystem():
 
     # Function to capture an image from the camera
     def capture_image():
-        #image_path = f'test-img/test_image10/photo_1.jpg'
-        #frame = cv2.imread(image_path, cv2.IMREAD_COLOR)
-
 
         cap = cv2.VideoCapture(camera_index)  # Open the default camera
         if not cap.isOpened():
@@ -53,15 +51,35 @@ def get_coordinateSystem():
             cv2.line(display_image, (x, y - 10), (x, y + 10), (0, 255, 0), 1)
 
     # Function to save configuration to a file
-    def save_to_file(points, matrix, transformed_point, filename="Project/txt/config.txt"):
-        os.makedirs(os.path.dirname(filename), exist_ok=True)
-        with open(filename, 'w') as file:
+    def save_to_file(points, matrix, transformed_point, filename="txt/config.txt"):
+        # Get the directory where the script is located
+        script_dir = os.path.dirname(os.path.realpath(__file__))
+        
+        # Define the full path for the file (relative to the script's location)
+        full_filename = os.path.join(script_dir, filename)
+        
+        # Ensure the directory exists
+        os.makedirs(os.path.dirname(full_filename), exist_ok=True)
+        
+        # Get the current time
+        current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        
+        # Write to the file
+        with open(full_filename, 'w') as file:
+            # Write the current time at the top of the file
+            file.write(f'Time of configuration: {current_time}\n\n')
+            
+            # Write the selected points
             for idx, point in enumerate(points[:3], start=1):
                 file.write(f'P{idx}: {point[0]},{point[1]}\n')
             file.write(f'P4: {points[3][0]},{points[3][1]}\n')
+            
+            # Write the transformation matrix
             file.write('\nTransformation Matrix:\n')
             for row in matrix:
                 file.write(' '.join(map(str, row)) + '\n')
+                
+            # Write the transformed point P4
             file.write(f'\nTransformed P4: {transformed_point[0]},{transformed_point[1]}\n')
 
     # Main function
@@ -117,4 +135,3 @@ def get_coordinateSystem():
     transformed_p4=main()
         
     return matrix, transformed_p4
-        

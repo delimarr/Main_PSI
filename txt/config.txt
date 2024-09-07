@@ -1,0 +1,12 @@
+Time of configuration: 2024-09-07 18:21:59
+
+P1: 517,547
+P2: 517,547
+P3: 517,547
+P4: 517,547
+
+Transformation Matrix:
+0.0 0.0 0.0
+0.0 0.0 0.0
+
+Transformed P4: 0.0,0.0

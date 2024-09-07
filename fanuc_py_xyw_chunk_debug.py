@@ -1,3 +1,4 @@
+#Sascha Laube
 from __future__ import annotations
 import socket
 from typing import Literal, List, Tuple
@@ -113,3 +114,4 @@ if __name__ == "__main__":
     ]
     robot.send_vision_data(vision_data)
     robot.disconnect()
+

@@ -1,3 +1,4 @@
+#Sascha Laube, Simon Eich
 from tkinter.tix import IMAGETEXT
 import customtkinter as customtkinter
 from customtkinter import *
@@ -17,6 +18,7 @@ from globals import callibration_lengt, callibragtion_tolerance
 
 # Import the global variable from the globals module
 from globals import chip_quality_array
+
 # ----------------------
 #  Main Programm - GUI, Datenhandling
 # Ersteller: S. Laube - SL
@@ -25,6 +27,11 @@ from globals import chip_quality_array
 # Version: 0.10 SL - GUI erstellt und Datenhandling von .csv und .xlsx - Funktion i. O
 # Version: 0.20 SL - Kommunikation zu Fanuc, Wafer-Map und Vision Daten senden - Funktion i. O
 # Version: 0.30 SL - GUI erweitert, Fenster für Error Nachrichten, Fenster für Wafer Bild - Funktion i. O.
+# Version: 0.40 SE - Hinzufügen Vision System
+# Version: 0.50 SE - Hinzufügen Koordinat
+# Version: 0.60 SE - Hinzufügen Kamera Funktion
+# Version: 0.70 SE - Hinzufügen von Try Funktion (keine Verbindung zu Roboter)
+# Weitere Versionen sind auf Github (https://github.com/SimonEich/Main_PSI)
 # ----------------------
 
 def update_scrollable_frame(message: str, color: str = "black"):
@@ -36,6 +43,7 @@ def update_scrollable_frame(message: str, color: str = "black"):
     label.pack(pady=5, padx=10)
 
 def file_browser():
+# Funktion to get the wafer map
     global chip_quality_array
     print("Opening next UI")
     file = filedialog.askopenfile()
@@ -128,18 +136,17 @@ def file_browser():
         output_file_csv = f"{waver_typ}_Wafer_{wafer}_Ablage_{current_datetime.strftime('%Y-%m-%d_%H-%M-%S')}.csv"
         waver_info_df.to_csv(output_file_csv, index=False)
         print(f"Files saved as {output_file_xlsx} and {output_file_csv}")
-        print(chip_quality_array)
         return chip_quality_array
 
 
 def vision_data():
-
-    global indices
+#Funktion to get the Vision Data
+    global indices      # Declare this as global to reuse it for updating the image
     global image_label  # Declare this as global to reuse it for updating the image
 
+    # Transforming the Postions of the good Quality Chips in the array into Numbers of their position.
     vision_data = []
     indices = [index for index, value in enumerate(chip_quality_array) if value == '1']
-    #print(f'indicies{indices}')
 
     # Check if Wafer map is loaded
     if chip_quality_array == []:
@@ -154,6 +161,13 @@ def vision_data():
     else:
         update_scrollable_frame('Es wurden alle 36 Chips gefunden!', color="green")
         print(f'visiondata:{vision_data}')
+        
+    #The numbers of the data of the Wafermap start with 1
+    def increase_first_number(visiondata):
+                # Increase the first number in each tuple by 2
+                updated_data = [(x + 2, y-1, z) for (x, y, z) in visiondata]
+                return updated_data
+    vision_data = increase_first_number(vision_data)
 
     # Resize the image
     original_height, original_width = detectSquareImg.shape[:2]
@@ -187,12 +201,7 @@ def vision_data():
         ee_DO_type="RDO",
         ee_DO_num=7,
     )
-    
-    def increase_first_number(visiondata):
-                # Increase the first number in each tuple by 2
-                updated_data = [(x + 2, y-1, z) for (x, y, z) in visiondata]
-                return updated_data
-    vision_data = increase_first_number(vision_data)
+
 
     try:
         robot.connect()
@@ -205,8 +214,8 @@ def vision_data():
     return vision_data, detectSquareImg
 
 
-
 def coordinate_system_func():
+# Funktion to setup the koordinate transformation
 
     matrix, transformed_p4=coordinate_system.get_coordinateSystem()
     if transformed_p4[0]> callibration_lengt+callibragtion_tolerance or transformed_p4[0] <callibration_lengt - callibragtion_tolerance and transformed_p4[1]> callibration_lengt+callibragtion_tolerance or transformed_p4[1] <callibration_lengt-callibragtion_tolerance:
@@ -217,8 +226,10 @@ def coordinate_system_func():
 
 
 def camera_setup():
+# Funktion to setup the camera
     camera.camera_video()
 
+#GUI
 customtkinter.set_appearance_mode("dark")
 customtkinter.set_default_color_theme("dark-blue")
 
@@ -267,6 +278,5 @@ bottom_frame.grid(row=1, column=0, padx=20, pady=20, sticky="nsew")
 
 bottom_label = customtkinter.CTkLabel(master=bottom_frame, text="Wafer Bild", font=("Arial", 20))
 bottom_label.pack(pady=12, padx=5)
-
 
 root.mainloop()  
