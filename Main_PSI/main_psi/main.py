@@ -1,23 +1,19 @@
-#Sascha Laube, Simon Eich
-from tkinter.tix import IMAGETEXT
-import customtkinter as customtkinter
-from customtkinter import *
-from tkinter import filedialog
-from PIL import Image, ImageTk
-import numpy as np
-import cv2
-import pandas as pd
-from datetime import datetime
+# Sascha Laube, Simon Eich
 import os
-import vision
-import coordinate_system
-import camera
-from fanuc_py_xyw_chunk_debug import FanucError, Robot
-from globals import callibration_lengt, callibragtion_tolerance
+from datetime import datetime
+from tkinter import filedialog
 
+import customtkinter as customtkinter
+import cv2
+import numpy as np
+import pandas as pd
+from customtkinter import *
+from PIL import Image, ImageTk
 
-# Import the global variable from the globals module
-from globals import chip_quality_array
+from main_psi import camera, coordinate_system, vision
+from main_psi.fanuc_py_xyw_chunk_debug import FanucError, Robot
+from main_psi.globals import (callibragtion_tolerance, callibration_lengt,
+                              chip_quality_array)
 
 # ----------------------
 #  Main Programm - GUI, Datenhandling
@@ -34,27 +30,33 @@ from globals import chip_quality_array
 # Weitere Versionen sind auf Github (https://github.com/SimonEich/Main_PSI)
 # ----------------------
 
+
 def update_scrollable_frame(message: str, color: str = "black"):
     # Get the current time and format it
     current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     # Add the timestamp to the message
     message_with_timestamp = f"{current_time} - {message}"
-    label = customtkinter.CTkLabel(master=scrollable_frame, text=message_with_timestamp, text_color=color)
+    label = customtkinter.CTkLabel(
+        master=scrollable_frame, text=message_with_timestamp, text_color=color
+    )
     label.pack(pady=5, padx=10)
 
+
 def file_browser():
-# Funktion to get the wafer map
+    # Funktion to get the wafer map
     global chip_quality_array
     print("Opening next UI")
     file = filedialog.askopenfile()
     if file:
         file_extension = os.path.splitext(file.name)[1]
-        if file_extension == '.xlsx':
+        if file_extension == ".xlsx":
             df = pd.read_excel(file.name, header=None)
-        elif file_extension == '.csv':
-            df = pd.read_csv(file.name, header=None, delimiter=';')
+        elif file_extension == ".csv":
+            df = pd.read_csv(file.name, header=None, delimiter=";")
         else:
-            error_message = "Dateityp wird nicht unterstützt, .csv oder .xlsx verwenden."
+            error_message = (
+                "Dateityp wird nicht unterstützt, .csv oder .xlsx verwenden."
+            )
             update_scrollable_frame(error_message, color="red")
             return
 
@@ -65,25 +67,26 @@ def file_browser():
 
         quality_values = [str(row[1]) for row in data_array]
         chip_quantity = len(quality_values)
-        if len(quality_values)==36:
-            update_scrollable_frame('Wafer map geladen', color='green')
+        if len(quality_values) == 36:
+            update_scrollable_frame("Wafer map geladen", color="green")
         chip_quantity_ = f"{chip_quantity:02}"
-        good_chip_count = len([row for row in data_array if row[1] != '0' and row[1] != 0])
+        good_chip_count = len(
+            [row for row in data_array if row[1] != "0" and row[1] != 0]
+        )
         good_chip_count_ = f"{good_chip_count:02}"
 
         cmd = f"setregister:{chip_quantity_}:{good_chip_count_}:{':'.join(quality_values)}"
-        
+
         # Information zu Qualität wird in VAR gespeichert
         quality_values = [str(row[1]) for row in data_array]
         global chip_quality_array
-        chip_quality_array = quality_values 
+        chip_quality_array = quality_values
 
         # Filter data_array for rows where the second column (Qualitaet) is 1
-        if file_extension == '.xlsx':
+        if file_extension == ".xlsx":
             data_array = np.array([row for row in data_array if row[1] != 0])
         else:
-            data_array = np.array([row for row in data_array if row[1] == '1'])
-
+            data_array = np.array([row for row in data_array if row[1] == "1"])
 
         ablagepunkt = [[0 for x in range(4)] for y in range(99)]
         for i in range(min(99, len(data_array))):
@@ -91,18 +94,22 @@ def file_browser():
                 if i * 4 + j < len(data_array):
                     ablagepunkt[i][j] = data_array[i * 4 + j][0]
 
-        ablagepunkt_indices = [(i, j) for i in range(99) for j in range(4) if ablagepunkt[i][j] != 0]
+        ablagepunkt_indices = [
+            (i, j) for i in range(99) for j in range(4) if ablagepunkt[i][j] != 0
+        ]
         ablagepunkt_index_1 = [index[0] + 1 for index in ablagepunkt_indices]
         ablagepunkt_index_2 = [index[1] + 1 for index in ablagepunkt_indices]
 
-        waver_info_df = pd.DataFrame({
-            'Waver Typ': [waver_typ] * len(data_array),
-            'Wafer Nummer': [wafer] * len(data_array),
-            'Chip Nummer': [row[0] for row in data_array],
-            'Qualitaet': [row[1] for row in data_array],
-            'Gel Pak Nummer': ablagepunkt_index_1,
-            'Position auf Gel Pak': ablagepunkt_index_2
-        })
+        waver_info_df = pd.DataFrame(
+            {
+                "Waver Typ": [waver_typ] * len(data_array),
+                "Wafer Nummer": [wafer] * len(data_array),
+                "Chip Nummer": [row[0] for row in data_array],
+                "Qualitaet": [row[1] for row in data_array],
+                "Gel Pak Nummer": ablagepunkt_index_1,
+                "Position auf Gel Pak": ablagepunkt_index_2,
+            }
+        )
 
         robot = Robot(
             robot_model="Fanuc",
@@ -112,18 +119,21 @@ def file_browser():
             ee_DO_num=7,
         )
         try:
-            print('works')
+            print("works")
             response = robot.connect()
-            update_scrollable_frame(response["msg"], "green" if response["success"] else "red")
+            update_scrollable_frame(
+                response["msg"], "green" if response["success"] else "red"
+            )
         except:
-            update_scrollable_frame('Roboter Verbindung fehlgeschlagen!', color="red")
-
+            update_scrollable_frame("Roboter Verbindung fehlgeschlagen!", color="red")
 
         if response["success"]:
             try:
                 response = robot.setregister(cmd=cmd)
-                message = f"Antwort Code: {response['code']} und Nachricht: {response['msg']}"
-                color = "green" if response['code'] == 0 else "red"
+                message = (
+                    f"Antwort Code: {response['code']} und Nachricht: {response['msg']}"
+                )
+                color = "green" if response["code"] == 0 else "red"
                 update_scrollable_frame(message, color)
             except FanucError as e:
                 update_scrollable_frame(str(e), color="red")
@@ -140,33 +150,38 @@ def file_browser():
 
 
 def vision_data():
-#Funktion to get the Vision Data
-    global indices      # Declare this as global to reuse it for updating the image
+    # Funktion to get the Vision Data
+    global indices  # Declare this as global to reuse it for updating the image
     global image_label  # Declare this as global to reuse it for updating the image
 
     # Transforming the Postions of the good Quality Chips in the array into Numbers of their position.
     vision_data = []
-    indices = [index for index, value in enumerate(chip_quality_array) if value == '1']
+    indices = [index for index, value in enumerate(chip_quality_array) if value == "1"]
 
     # Check if Wafer map is loaded
     if chip_quality_array == []:
-        update_scrollable_frame('Keine Wafer map geladen: Importiere zuerst eine Wafer map!', color="red")
+        update_scrollable_frame(
+            "Keine Wafer map geladen: Importiere zuerst eine Wafer map!", color="red"
+        )
         return
     else:
         vision_data, detectSquareImg, num_center = vision.get_vision_data(indices)
 
     # Check the number of chips found
     if len(vision_data) != 36:
-        update_scrollable_frame(f'Anzahl Chips nicht korrekt: Aktuelle Zahl {len(vision_data)}', color="red")
+        update_scrollable_frame(
+            f"Anzahl Chips nicht korrekt: Aktuelle Zahl {len(vision_data)}", color="red"
+        )
     else:
-        update_scrollable_frame('Es wurden alle 36 Chips gefunden!', color="green")
-        print(f'visiondata:{vision_data}')
-        
-    #The numbers of the data of the Wafermap start with 1
+        update_scrollable_frame("Es wurden alle 36 Chips gefunden!", color="green")
+        print(f"visiondata:{vision_data}")
+
+    # The numbers of the data of the Wafermap start with 1
     def increase_first_number(visiondata):
-                # Increase the first number in each tuple by 2
-                updated_data = [(x + 2, y-1, z) for (x, y, z) in visiondata]
-                return updated_data
+        # Increase the first number in each tuple by 2
+        updated_data = [(x + 2, y - 1, z) for (x, y, z) in visiondata]
+        return updated_data
+
     vision_data = increase_first_number(vision_data)
 
     # Resize the image
@@ -178,20 +193,24 @@ def vision_data():
     detectSquareImg = cv2.resize(detectSquareImg, (new_width, new_height))
 
     try:
-        PIL_image = Image.fromarray(detectSquareImg, 'RGB')
+        PIL_image = Image.fromarray(detectSquareImg, "RGB")
         ctk_image = ImageTk.PhotoImage(PIL_image)
 
         # Check if image_label exists, if yes, update it, otherwise create it
-        if 'image_label' in globals():
+        if "image_label" in globals():
             image_label.configure(image=ctk_image)
-            image_label.image = ctk_image  # Keep a reference to avoid garbage collection
+            image_label.image = (
+                ctk_image  # Keep a reference to avoid garbage collection
+            )
         else:
             image_label = customtkinter.CTkLabel(bottom_frame, image=ctk_image, text="")
             image_label.pack(padx=20, pady=20)
-            image_label.image = ctk_image  # Keep a reference to avoid garbage collection
+            image_label.image = (
+                ctk_image  # Keep a reference to avoid garbage collection
+            )
 
     except Exception as e:
-        print(f'Error displaying image: {e}')
+        print(f"Error displaying image: {e}")
 
     # Robot data transmission (unchanged)
     robot = Robot(
@@ -202,34 +221,43 @@ def vision_data():
         ee_DO_num=7,
     )
 
-
     try:
         robot.connect()
         robot.send_vision_data(vision_data)
-        update_scrollable_frame('Die Vision-Daten wurden erfolgreich gesendet!', color="green")
+        update_scrollable_frame(
+            "Die Vision-Daten wurden erfolgreich gesendet!", color="green"
+        )
         robot.disconnect()
     except:
-        update_scrollable_frame('Roboter Verbindung fehlgeschlagen', color="red")
+        update_scrollable_frame("Roboter Verbindung fehlgeschlagen", color="red")
 
     return vision_data, detectSquareImg
 
 
 def coordinate_system_func():
-# Funktion to setup the koordinate transformation
+    # Funktion to setup the koordinate transformation
 
-    matrix, transformed_p4=coordinate_system.get_coordinateSystem()
-    if transformed_p4[0]> callibration_lengt+callibragtion_tolerance or transformed_p4[0] <callibration_lengt - callibragtion_tolerance and transformed_p4[1]> callibration_lengt+callibragtion_tolerance or transformed_p4[1] <callibration_lengt-callibragtion_tolerance:
-        update_scrollable_frame('Kallibrierung nicht exact: Bitte erneut versuchen!', color="red")
-    else: 
-        update_scrollable_frame('Kallibrierung Koordinatensystem i.O.', color="green")
+    matrix, transformed_p4 = coordinate_system.get_coordinateSystem()
+    if (
+        transformed_p4[0] > callibration_lengt + callibragtion_tolerance
+        or transformed_p4[0] < callibration_lengt - callibragtion_tolerance
+        and transformed_p4[1] > callibration_lengt + callibragtion_tolerance
+        or transformed_p4[1] < callibration_lengt - callibragtion_tolerance
+    ):
+        update_scrollable_frame(
+            "Kallibrierung nicht exact: Bitte erneut versuchen!", color="red"
+        )
+    else:
+        update_scrollable_frame("Kallibrierung Koordinatensystem i.O.", color="green")
     return matrix
 
 
 def camera_setup():
-# Funktion to setup the camera
+    # Funktion to setup the camera
     camera.camera_video()
 
-#GUI
+
+# GUI
 customtkinter.set_appearance_mode("dark")
 customtkinter.set_default_color_theme("dark-blue")
 
@@ -249,25 +277,35 @@ main_container.grid_columnconfigure(1, weight=6)
 main_frame = customtkinter.CTkFrame(master=main_container)
 main_frame.grid(row=0, column=0, padx=20, pady=20, sticky="nsew")
 
-label = customtkinter.CTkLabel(master=main_frame, text="Import Wafer-Map", font=("Arial", 20))
+label = customtkinter.CTkLabel(
+    master=main_frame, text="Import Wafer-Map", font=("Arial", 20)
+)
 label.pack(pady=12, padx=10)
 
 button = customtkinter.CTkButton(master=main_frame, text="Öffnen", command=file_browser)
 button.pack(pady=12, padx=10)
 
-label = customtkinter.CTkLabel(master=main_frame, text="Import Vision Daten", font=("Arial", 20))
+label = customtkinter.CTkLabel(
+    master=main_frame, text="Import Vision Daten", font=("Arial", 20)
+)
 label.pack(pady=12, padx=10)
 
-vision_button = customtkinter.CTkButton(master=main_frame, text="Vision Data", command=vision_data)
+vision_button = customtkinter.CTkButton(
+    master=main_frame, text="Vision Data", command=vision_data
+)
 vision_button.pack(pady=12, padx=10)
 
 label = customtkinter.CTkLabel(master=main_frame, text="Settings", font=("Arial", 20))
 label.pack(pady=12, padx=10)
 
-coordinat_button = customtkinter.CTkButton(master=main_frame, text="Kalibration", command=coordinate_system_func)
+coordinat_button = customtkinter.CTkButton(
+    master=main_frame, text="Kalibration", command=coordinate_system_func
+)
 coordinat_button.pack(pady=12, padx=10)
 
-coordinat_button = customtkinter.CTkButton(master=main_frame, text="Kamera", command=camera_setup)
+coordinat_button = customtkinter.CTkButton(
+    master=main_frame, text="Kamera", command=camera_setup
+)
 coordinat_button.pack(pady=12, padx=10)
 
 scrollable_frame = customtkinter.CTkScrollableFrame(master=main_container)
@@ -276,7 +314,9 @@ scrollable_frame.grid(row=0, column=1, padx=20, pady=20, sticky="nsew")
 bottom_frame = customtkinter.CTkFrame(master=root)
 bottom_frame.grid(row=1, column=0, padx=20, pady=20, sticky="nsew")
 
-bottom_label = customtkinter.CTkLabel(master=bottom_frame, text="Wafer Bild", font=("Arial", 20))
+bottom_label = customtkinter.CTkLabel(
+    master=bottom_frame, text="Wafer Bild", font=("Arial", 20)
+)
 bottom_label.pack(pady=12, padx=5)
 
-root.mainloop()  
+root.mainloop()

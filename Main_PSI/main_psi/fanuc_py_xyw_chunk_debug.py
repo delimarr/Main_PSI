@@ -1,20 +1,22 @@
-#Sascha Laube
+# Sascha Laube
 from __future__ import annotations
+
 import socket
-from typing import Literal, List, Tuple
+
 
 class FanucError(Exception):
     pass
 
+
 class Robot:
     def __init__(
-            self,
-            robot_model: str,
-            host: str,
-            port: int = 18375,
-            ee_DO_type: str | None = None,
-            ee_DO_num: int | None = None,
-            socket_timeout: int = 60,
+        self,
+        robot_model: str,
+        host: str,
+        port: int = 18375,
+        ee_DO_type: str | None = None,
+        ee_DO_num: int | None = None,
+        socket_timeout: int = 60,
     ):
         self.robot_model = robot_model
         self.host = host
@@ -66,26 +68,40 @@ class Robot:
     def setregister(self, cmd: str, continue_on_error: bool = False) -> dict:
         return self.send_cmd(cmd, continue_on_error=continue_on_error)
 
-    def send_vision_data(self, vision_data: List[Tuple[float, float, float]], continue_on_error: bool = False) -> List[dict]:
+    def send_vision_data(
+        self,
+        vision_data: list[tuple[float, float, float]],
+        continue_on_error: bool = False,
+    ) -> list[dict]:
         responses = []
         try:
             max_points_per_msg = 12
-            formatted_vision_data = [(f"{x_pos:05.1f}", f"{y_pos:05.1f}", f"{w_orient:05.1f}") for x_pos, y_pos, w_orient in vision_data]
+            formatted_vision_data = [
+                (f"{x_pos:05.1f}", f"{y_pos:05.1f}", f"{w_orient:05.1f}")
+                for x_pos, y_pos, w_orient in vision_data
+            ]
             n_chips_vision = len(formatted_vision_data)
             n_chips_vision_ = f"{n_chips_vision:02}"
 
             for i in range(0, len(formatted_vision_data), max_points_per_msg):
-                chunk = formatted_vision_data[i:i + max_points_per_msg]
-                cmd_parts = ["vision", str(i // max_points_per_msg + 1), n_chips_vision_]
+                chunk = formatted_vision_data[i : i + max_points_per_msg]
+                cmd_parts = [
+                    "vision",
+                    str(i // max_points_per_msg + 1),
+                    n_chips_vision_,
+                ]
                 for data in chunk:
                     cmd_parts.extend(data)
                 cmd = ":".join(cmd_parts)
                 print(cmd)
-                responses.append(self.send_cmd(cmd, continue_on_error=continue_on_error))
+                responses.append(
+                    self.send_cmd(cmd, continue_on_error=continue_on_error)
+                )
         except Exception as e:
             responses.append({"code": self.ERROR_CODE, "msg": str(e), "success": False})
 
         return responses
+
 
 if __name__ == "__main__":
     robot = Robot(
@@ -98,20 +114,45 @@ if __name__ == "__main__":
     try:
         robot.connect()
     except:
-        print('Roboter Verbindung fehlgeschlagen!')
-
+        print("Roboter Verbindung fehlgeschlagen!")
 
     vision_data = [
-        (20, 20, -2.9), (20, 60, 2.9), (20, 100, -2.9), (20, 140, 2.9),
-        (60, 20, -2.9), (60, 60, 2.9), (60, 100, -2.9), (60, 140, 2.9),
-        (100, 20, -2.9), (100, 60, 2.9), (100, 100, -2.9), (100, 140, 2.9),
-        (140, 20, -2.9), (140, 60, 2.9), (140, 100, -2.9), (140, 140, 2.9),
-        (180, 20, -2.9), (180, 60, 2.9), (180, 100, -2.9), (180, 140, 2.9),
-        (220, 20, -2.9), (220, 60, 2.9), (220, 100, -2.9), (220, 140, 2.9),
-        (260, 20, -2.9), (260, 60, 2.9), (260, 100, -2.9), (260, 140, 2.9),
-        (300, 20, -2.9), (300, 60, 2.9), (300, 100, -2.9), (300, 140, 2.9),
-        (340, 20, -2.9), (340, 60, 2.9), (340, 100, -2.9), (340, 140, 2.9)
+        (20, 20, -2.9),
+        (20, 60, 2.9),
+        (20, 100, -2.9),
+        (20, 140, 2.9),
+        (60, 20, -2.9),
+        (60, 60, 2.9),
+        (60, 100, -2.9),
+        (60, 140, 2.9),
+        (100, 20, -2.9),
+        (100, 60, 2.9),
+        (100, 100, -2.9),
+        (100, 140, 2.9),
+        (140, 20, -2.9),
+        (140, 60, 2.9),
+        (140, 100, -2.9),
+        (140, 140, 2.9),
+        (180, 20, -2.9),
+        (180, 60, 2.9),
+        (180, 100, -2.9),
+        (180, 140, 2.9),
+        (220, 20, -2.9),
+        (220, 60, 2.9),
+        (220, 100, -2.9),
+        (220, 140, 2.9),
+        (260, 20, -2.9),
+        (260, 60, 2.9),
+        (260, 100, -2.9),
+        (260, 140, 2.9),
+        (300, 20, -2.9),
+        (300, 60, 2.9),
+        (300, 100, -2.9),
+        (300, 140, 2.9),
+        (340, 20, -2.9),
+        (340, 60, 2.9),
+        (340, 100, -2.9),
+        (340, 140, 2.9),
     ]
     robot.send_vision_data(vision_data)
     robot.disconnect()
-

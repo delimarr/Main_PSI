@@ -1,10 +1,9 @@
-#Autor: Simon Eich
-#File to open a window with a live vidoe of the camera.
+# Autor: Simon Eich
+# File to open a window with a live vidoe of the camera.
 import cv2
-import tkinter as tk
-from tkinter import ttk
-from PIL import Image, ImageTk
-from globals import camera_index
+
+from main_psi.globals import camera_index
+
 
 def camera_video():
     # Capture video from camera
@@ -32,9 +31,9 @@ def camera_video():
         # Capture photo on button press
         key = cv2.waitKey(1)
         # Exit on 'Esc' key press (ASCII code 27)
-        if key ==27:
+        if key == 27:
             break
-        
+
         elif key != -1:
             # If any other key is pressed, ignore it
             continue

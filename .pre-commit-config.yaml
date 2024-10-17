@@ -1,0 +1,89 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: check-yaml
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: check-case-conflict
+      - id: check-ast
+      - id: check-added-large-files
+        args: ["--maxkb=1000"]
+        exclude: ^data/
+
+  - repo: https://github.com/hadialqattan/pycln.git
+    rev: v2.3.0
+    hooks:
+      - id: pycln
+        name: pycln (python)
+        args: [--config=pyproject.toml]
+        exclude: ^data/
+
+  - repo: https://github.com/asottile/pyupgrade.git
+    rev: v3.15.0
+    hooks:
+      - id: pyupgrade
+        exclude: ^data/
+
+  - repo: https://github.com/psf/black
+    rev: 23.10.1
+    hooks:
+      - id: black
+        exclude: ^data/
+
+  - repo: https://github.com/pycqa/isort
+    rev: 5.12.0
+    hooks:
+      - id: isort
+        name: isort (python)
+        exclude: ^data/
+
+  - repo: https://github.com/PyCQA/pydocstyle
+    rev: 6.3.0
+    hooks:
+      - id: pydocstyle
+        name: pydocstyle
+        args:
+          - --convention=google
+        exclude: ^data/
+
+  - repo: https://github.com/pycqa/pylint
+    rev: v3.0.2
+    hooks:
+      - id: pylint
+        types: [python]
+        exclude: ^data/
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.6.1
+    hooks:
+      - id: mypy
+        name: mypy
+        args:
+          [
+            --follow-imports=silent,
+            --ignore-missing-imports,
+            --show-column-numbers,
+            --no-pretty,
+            --strict,
+          ]
+        additional_dependencies: ["toml", "types-toml", "types-requests"]
+        exclude: ^data/
+
+  - repo: local
+    hooks:
+      - id: poetry-install
+        name: Install project deps
+        entry: poetry install
+        language: python
+        additional_dependencies: [pre-commit, poetry]
+        always_run: true
+        pass_filenames: false
+      - id: run-tests
+        name: Run tests
+        entry: poetry run pytest
+        language: python
+        additional_dependencies: [pre-commit, poetry]
+        always_run: true
+        pass_filenames: false
+        exclude: ^data/

@@ -1,0 +1,2 @@
+# Main_PSI
+Das Projekt enthält ein Bildverarbeitungsprogramm zur Erkennung und Erfassung der Positionsdaten der Chips, die aus dem Wafer bestehen. Für eine benutzerfreundliche Bedienung wurde eine Benutzeroberfläche entwickelt. Über diese können weitere wichtige Funktionen aufgerufen werden, die für den Ablauf essenziell sind. Dazu gehören das Einlesen der Wafer-Map, die Berechnung der Koordinatentransformation sowie die Möglichkeit, auf ein Livebild der Kamera zuzugreifen, um die Kamera optimal einstellen zu können.

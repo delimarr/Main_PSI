@@ -1,26 +1,27 @@
-#Autor: Simon Eich
-#File to calculate the koordinate Transformation.
+# Autor: Simon Eich
+# File to calculate the koordinate Transformation.
 
-import cv2
 import os
-import numpy as np
-from globals import camera_index, callibration_lengt
 from datetime import datetime  # Import datetime module for current timestamp
 
+import cv2
+import numpy as np
+
+from main_psi.globals import callibration_lengt, camera_index
+
+
 def get_coordinateSystem():
-    
-    matrix=0
+    matrix = 0
 
     # Function to capture an image from the camera
     def capture_image():
-
         cap = cv2.VideoCapture(camera_index)  # Open the default camera
         if not cap.isOpened():
             raise Exception("Could not open video device")
-        
+
         ret, frame = cap.read()
         cap.release()
-        
+
         if not ret:
             raise Exception("Failed to capture image")
 
@@ -29,7 +30,9 @@ def get_coordinateSystem():
     # Function to calculate the transformation matrix
     def calculate_transformation_matrix(p1, p2, p3):
         pts_src = np.array([p1, p2, p3], dtype=np.float32)
-        pts_dst = np.array([[0, 0], [0, callibration_lengt], [callibration_lengt, 0]], dtype=np.float32)
+        pts_dst = np.array(
+            [[0, 0], [0, callibration_lengt], [callibration_lengt, 0]], dtype=np.float32
+        )
 
         matrix = cv2.getAffineTransform(pts_src, pts_dst)
         return matrix
@@ -57,33 +60,35 @@ def get_coordinateSystem():
     def save_to_file(points, matrix, transformed_point, filename="txt/config.txt"):
         # Get the directory where the script is located
         script_dir = os.path.dirname(os.path.realpath(__file__))
-        
+
         # Define the full path for the file (relative to the script's location)
         full_filename = os.path.join(script_dir, filename)
-        
+
         # Ensure the directory exists
         os.makedirs(os.path.dirname(full_filename), exist_ok=True)
-        
+
         # Get the current time
-        current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        
+        current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
         # Write to the file
-        with open(full_filename, 'w') as file:
+        with open(full_filename, "w") as file:
             # Write the current time at the top of the file
-            file.write(f'Time of configuration: {current_time}\n\n')
-            
+            file.write(f"Time of configuration: {current_time}\n\n")
+
             # Write the selected points
             for idx, point in enumerate(points[:3], start=1):
-                file.write(f'P{idx}: {point[0]},{point[1]}\n')
-            file.write(f'P4: {points[3][0]},{points[3][1]}\n')
-            
+                file.write(f"P{idx}: {point[0]},{point[1]}\n")
+            file.write(f"P4: {points[3][0]},{points[3][1]}\n")
+
             # Write the transformation matrix
-            file.write('\nTransformation Matrix:\n')
+            file.write("\nTransformation Matrix:\n")
             for row in matrix:
-                file.write(' '.join(map(str, row)) + '\n')
-                
+                file.write(" ".join(map(str, row)) + "\n")
+
             # Write the transformed point P4
-            file.write(f'\nTransformed P4: {transformed_point[0]},{transformed_point[1]}\n')
+            file.write(
+                f"\nTransformed P4: {transformed_point[0]},{transformed_point[1]}\n"
+            )
 
     # Main function
     def main():
@@ -100,20 +105,33 @@ def get_coordinateSystem():
         cv2.imshow("Select 4 Points", display_image)
         cv2.setMouseCallback("Select 4 Points", select_points)
 
-        point_names = [f"P1 (0,0)", f"P2 (0,{callibration_lengt})", f"P3 ({callibration_lengt},0)", f"P4 ({callibration_lengt},{callibration_lengt})"]
+        point_names = [
+            f"P1 (0,0)",
+            f"P2 (0,{callibration_lengt})",
+            f"P3 ({callibration_lengt},0)",
+            f"P4 ({callibration_lengt},{callibration_lengt})",
+        ]
 
         while len(points) < 4:
             if len(points) < 4:
-                cv2.putText(display_image, f"Select {point_names[len(points)]}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+                cv2.putText(
+                    display_image,
+                    f"Select {point_names[len(points)]}",
+                    (10, 30),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    1,
+                    (0, 255, 0),
+                    2,
+                )
             cv2.imshow("Select 4 Points", display_image)
             cv2.waitKey(1)
-        
-                # Capture photo on button press
+
+            # Capture photo on button press
             key = cv2.waitKey(1)
             # Exit on 'Esc' key press (ASCII code 27)
-            if key ==27:
+            if key == 27:
                 break
-            
+
             elif key != -1:
                 # If any other key is pressed, ignore it
                 continue
@@ -126,15 +144,13 @@ def get_coordinateSystem():
         # Transform the fourth point
         transformed_p4 = apply_transformation(matrix, points[3])
 
-
         # Save the points and transformation matrix to a file
         save_to_file(points, matrix, transformed_p4)
 
         print(f"Transformation matrix and points saved to txt/config.txt:\n{matrix}")
-        
+
         return transformed_p4
 
-  
-    transformed_p4=main()
-        
+    transformed_p4 = main()
+
     return matrix, transformed_p4
