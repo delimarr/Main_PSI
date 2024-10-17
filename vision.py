@@ -5,6 +5,7 @@ import cv2
 import numpy as np
 from math import sqrt
 import time
+import os
 
 # Import the global variable from the globals module
 global indices
@@ -21,7 +22,7 @@ jumped= 0
 
 def get_vision_data_func(indices):
         
-        filename="txt/config.txt"
+        file_path="txt/config.txt"
         #image_path = f'Studie/img/img30.jpg' #used for tests when the camera is not available 
 
         #Patameters for the line, mask center movement and Changing of the Radius
@@ -362,11 +363,18 @@ def get_vision_data_func(indices):
             return centers_squares, center, num_center, angle, detect_squares_img
 
 
-        def read_config_file(filename):
+        def read_config_file(file_path):
         # getting the Matrix from the config file to do the coordinate transformation.
             points = []
             matrix = []
             transformed_p4 = None
+            
+                # Get the directory where the script is located
+            script_dir = os.path.dirname(os.path.realpath(__file__))
+
+            # Define the full path for the config file (relative to the script's location)
+            filename = os.path.join(script_dir, file_path)
+            
 
             with open(filename, 'r') as file:
                 lines = file.readlines()
@@ -390,7 +398,7 @@ def get_vision_data_func(indices):
 
             # Convert matrix to a NumPy array
             matrix = np.array(matrix, dtype=np.float32)
-
+            
             return matrix
 
 
@@ -449,6 +457,7 @@ def get_vision_data_func(indices):
 
 
         # Analyze the provided image
+        matrix = read_config_file(file_path)
         frame = capture_picture(camera_index)
         circle_image, center, radius, image= find_circle(frame)
         black_image = black_image(image)
@@ -458,7 +467,6 @@ def get_vision_data_func(indices):
         circular_region= circle_lines_SW(white_black_lines)
         square_image = change_background_to_white(circular_region)
         detect_squares_centers, center, num_center, angle, detect_squares_img = detect_squares(square_image, min_square_size, max_square_size, indices)
-        matrix = read_config_file(filename)
         #filtered_points = filter_points_by_quality(center, chip_quality_array, center) #The points are filtered later in the Karol Programm of the Robot. So it's not nessecary to do it here.
         
         
@@ -510,4 +518,4 @@ def get_vision_data(indices):
         
     return vision_data, detected_img, num_center
 
-        
+get_vision_data(vision_data)
